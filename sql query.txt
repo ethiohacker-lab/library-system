@@ -1,0 +1,77 @@
+CREATE DATABASE IF NOT EXISTS library_db;
+USE library_db;
+
+-- Users table
+CREATE TABLE users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    user_type ENUM('admin', 'librarian', 'student', 'faculty') DEFAULT 'student',
+    registration_no VARCHAR(50) UNIQUE,
+    department VARCHAR(100),
+    phone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('active', 'inactive', 'suspended') DEFAULT 'active'
+);
+
+-- Books table
+CREATE TABLE books (
+    book_id INT PRIMARY KEY AUTO_INCREMENT,
+    isbn VARCHAR(20) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    publisher VARCHAR(100),
+    publication_year YEAR,
+    category VARCHAR(100),
+    shelf_location VARCHAR(50),
+    total_copies INT DEFAULT 1,
+    available_copies INT DEFAULT 1,
+    price DECIMAL(10,2),
+    description TEXT,
+    cover_image VARCHAR(255),
+    added_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Borrowings table
+CREATE TABLE borrowings (
+    borrowing_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    book_id INT,
+    borrowed_date DATE NOT NULL,
+    due_date DATE NOT NULL,
+    returned_date DATE,
+    fine_amount DECIMAL(10,2) DEFAULT 0.00,
+    status ENUM('borrowed', 'returned', 'overdue') DEFAULT 'borrowed',
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (book_id) REFERENCES books(book_id) ON DELETE CASCADE
+);
+
+-- Reservations table
+CREATE TABLE reservations (
+    reservation_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    book_id INT,
+    reservation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('pending', 'available', 'cancelled') DEFAULT 'pending',
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (book_id) REFERENCES books(book_id)
+);
+
+-- Fines table
+CREATE TABLE fines (
+    fine_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    borrowing_id INT,
+    amount DECIMAL(10,2) NOT NULL,
+    reason VARCHAR(255),
+    paid BOOLEAN DEFAULT FALSE,
+    payment_date DATE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (borrowing_id) REFERENCES borrowings(borrowing_id)
+);
+
+-- Insert default admin
+INSERT INTO users (username, password, email, full_name, user_type) 
+VALUES ('admin', '$2y$10$YourHashedPasswordHere', 'admin@university.edu', 'System Administrator', 'admin');
